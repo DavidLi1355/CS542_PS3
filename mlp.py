@@ -81,17 +81,16 @@ class TwoLayerMLP(object):
 
     # 1st layer nonlinearity, N*H
     if self.activation is 'relu':
-        # [PLEASE IMPLEMENT]
-        raise NotImplementedError('ReLU forward not implemented')
+      hidden = z1 * (z1 > 0)
     elif self.activation is 'sigmoid':
-        # [PLEASE IMPLEMENT]
-        raise NotImplementedError('Sigmoid forward not implemented')
+      z1Clip = np.clip(z1, -500, 500)
+      hidden = 1 / (1 + np.exp(-z1Clip))
     else:
-        raise ValueError('Unknown activation type')
+      raise ValueError('Unknown activation type')
         
     # [PLEASE IMPLEMENT] 2nd layer activation, N*C
     # hint: involves W2, b2
-    scores = None  
+    scores = np.dot(hidden, W2) + b2 
     ###########################################################################
     #                            END OF YOUR CODE
     ###########################################################################
@@ -125,24 +124,25 @@ class TwoLayerMLP(object):
     ###########################################################################
 
     # output layer
-    dscore = None  # [PLEASE IMPLEMENT] partial derivative of loss wrt. the logits (dL/dz)
+    classes = np.max(np.array(y)) + 1
+    targets = np.array(y)
+    yOneHot = np.eye(classes)[targets]
+    dscore = P - yOneHot # [PLEASE IMPLEMENT] partial derivative of loss wrt. the logits (dL/dz)
     dW2 = np.dot(hidden.T, dscore)/N  # partial derivative of loss wrt. W2
     db2 = np.mean(dscore, axis=0)     # partial derivation of loss wrt. b2
 
     # hidden layer
-    dhidden = None 
+    dhidden = np.dot(dscore, W2.T) 
     if self.activation is 'relu':
-        # [PLEASE IMPLEMENT]
-        raise NotImplementedError('ReLU backward not implemented')
+      dz1 = dhidden * (z1 > 0) 
     elif self.activation is 'sigmoid':
-        # [PLEASE IMPLEMENT]
-        raise NotImplementedError('Sigmoid backward not implemented')
+      dz1 = dhidden * hidden * (1-hidden)
     else:
         raise ValueError('Unknown activation type')
 
     # first layer
-    dW1 = None  # [PLEASE IMPLEMENT]
-    db1 = None  # [PLEASE IMPLEMENT]
+    dW1 = np.dot(X.T, dz1)/N    # [PLEASE IMPLEMENT]
+    db1 = np.mean(dz1, axis=0)  # [PLEASE IMPLEMENT]
     ###########################################################################
     #                            END OF YOUR CODE
     ###########################################################################
@@ -251,7 +251,7 @@ class TwoLayerMLP(object):
     ###########################################################################
     # [PLEASE IMPLEMENT]
     # hint: it should be very easy
-    y_pred = None
+    y_pred = np.argmax(self.loss(X), axis=1)
     ###########################################################################
 
     return y_pred
